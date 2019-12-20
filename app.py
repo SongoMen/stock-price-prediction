@@ -50,6 +50,7 @@ def getStockData():
     data = data.rename(columns={'Adj. Close':'EOD'})
     data['prediction'] = prediction[:]
     data = data.to_json(orient='table')
-    print(prediction)
+    print(data)
+
 getStockData()
 
