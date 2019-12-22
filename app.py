@@ -11,11 +11,10 @@ from sklearn.model_selection import train_test_split
 def getStockData():
     quandl.ApiConfig.api_key = "qWcicxSctVxrP9PhyneG"
     allData = quandl.get('WIKI/AAPL')
-    dataLength = 251
-    allDataLength = len(allData)
-    firstDataElem = math.floor(random.random()*(allDataLength-dataLength))
+    dataLength = 100 
+    print(dataLength)
+    firstDataElem = len(allData) 
     mlData = allData[0:firstDataElem+dataLength]
-    print(mlData)
     def FormatForModel(dataArray):
         dataArray = dataArray[['Adj. Open', 'Adj. High', 'Adj. Low', 'Adj. Close', 'Adj. Volume']]
         dataArray['HL_PCT'] = (dataArray['Adj. High'] - dataArray['Adj. Close']) / dataArray['Adj. Close'] * 100.0
@@ -44,13 +43,12 @@ def getStockData():
     clf = LinearRegression()
     clf.fit(X_train, y_train)
     accuracy = clf.score(X_test, y_test)
-    print(accuracy)
     prediction = clf.predict(X_data)
-    print(prediction)
     data = data[['Adj. Close']]
     data = data.rename(columns={'Adj. Close':'EOD'})
     data['prediction'] = prediction[:]
     np.set_printoptions(threshold=sys.maxsize)
+    print(accuracy,data)
     data = data.to_json(orient='table')
 
 getStockData()
