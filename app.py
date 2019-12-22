@@ -1,4 +1,5 @@
 import pandas as pd
+import sys
 import quandl
 import math
 import random
@@ -14,7 +15,7 @@ def getStockData():
     allDataLength = len(allData)
     firstDataElem = math.floor(random.random()*(allDataLength-dataLength))
     mlData = allData[0:firstDataElem+dataLength]
-
+    print(mlData)
     def FormatForModel(dataArray):
         dataArray = dataArray[['Adj. Open', 'Adj. High', 'Adj. Low', 'Adj. Close', 'Adj. Volume']]
         dataArray['HL_PCT'] = (dataArray['Adj. High'] - dataArray['Adj. Close']) / dataArray['Adj. Close'] * 100.0
@@ -24,7 +25,6 @@ def getStockData():
         return dataArray
 
     mlData = FormatForModel(mlData)
-
     forecast_col = 'Adj. Close'
     forecast_out = int(math.ceil(0.12*dataLength))
 
@@ -44,13 +44,14 @@ def getStockData():
     clf = LinearRegression()
     clf.fit(X_train, y_train)
     accuracy = clf.score(X_test, y_test)
-
+    print(accuracy)
     prediction = clf.predict(X_data)
+    print(prediction)
     data = data[['Adj. Close']]
     data = data.rename(columns={'Adj. Close':'EOD'})
     data['prediction'] = prediction[:]
+    np.set_printoptions(threshold=sys.maxsize)
     data = data.to_json(orient='table')
-    print(data)
 
 getStockData()
 
