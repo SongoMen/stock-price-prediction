@@ -1,55 +1,56 @@
-import pandas as pd
-import sys
-import quandl
-import math
-import random
+import quandl, math
 import numpy as np
-from sklearn import preprocessing,  svm
-from sklearn.linear_model import LinearRegression
+import pandas as pd
 from sklearn.model_selection import train_test_split
+from sklearn import preprocessing, svm
+from sklearn.linear_model import LinearRegression
+import matplotlib.pyplot as plt
+from matplotlib import style
+import datetime
 
-def getStockData():
-    quandl.ApiConfig.api_key = "qWcicxSctVxrP9PhyneG"
-    allData = quandl.get('WIKI/TSLA')
-    dataLength = 200 
-    print(allData.tail())
-    firstDataElem = len(allData) 
-    mlData = allData[0:firstDataElem]
-    def FormatForModel(dataArray):
-        dataArray = dataArray[['Adj. Open', 'Adj. High', 'Adj. Low', 'Adj. Close', 'Adj. Volume']]
-        dataArray['HL_PCT'] = (dataArray['Adj. High'] - dataArray['Adj. Close']) / dataArray['Adj. Close'] * 100.0
-        dataArray['PCT_change'] = (dataArray['Adj. Close'] - dataArray['Adj. Open']) / dataArray['Adj. Open'] * 100.0
-        dataArray = dataArray[['Adj. Close', 'HL_PCT', 'PCT_change','Adj. Volume']]
-        dataArray.fillna(-99999, inplace=True)
-        return dataArray
+style.use('ggplot')
 
-    mlData = FormatForModel(mlData)
-    forecast_col = 'Adj. Close'
-    forecast_out = int(math.ceil(0.12*dataLength))
+df = quandl.get("WIKI/GOOGL")
+df = df[['Adj. Open',  'Adj. High',  'Adj. Low',  'Adj. Close', 'Adj. Volume']]
+df['HL_PCT'] = (df['Adj. High'] - df['Adj. Low']) / df['Adj. Close'] * 100.0
+df['PCT_change'] = (df['Adj. Close'] - df['Adj. Open']) / df['Adj. Open'] * 100.0
 
-    mlData['label'] = mlData[forecast_col].shift(-forecast_out)
-    mlData.dropna(inplace=True)
+df = df[['Adj. Close', 'HL_PCT', 'PCT_change', 'Adj. Volume']]
+forecast_col = 'Adj. Close'
+df.fillna(value=-99999, inplace=True)
+forecast_out = int(math.ceil(0.01 * len(df)))
+df['label'] = df[forecast_col].shift(-forecast_out)
 
-    X = np.array(mlData.drop(['label'],1))
-    X = preprocessing.scale(X)
-    X_data = X[-dataLength:]
-    X = X[:-dataLength]
-    data = mlData[-dataLength:]
-    mlData = mlData[:-dataLength]
-    y = np.array(mlData['label'])
+X = np.array(df.drop(['label'], 1))
+X = preprocessing.scale(X)
+X_lately = X[-forecast_out:]
+X = X[:-forecast_out]
 
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3)
+df.dropna(inplace=True)
 
-    clf = LinearRegression()
-    clf.fit(X_train, y_train)
-    accuracy = clf.score(X_test, y_test)
-    prediction = clf.predict(X_data)
-    data = data[['Adj. Close']]
-    data = data.rename(columns={'Adj. Close':'EOD'})
-    data['prediction'] = prediction[:]
-    np.set_printoptions(threshold=sys.maxsize)
-    print(accuracy,data)
-    data = data.to_json(orient='table')
+y = np.array(df['label'])
 
-getStockData()
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
+clf = LinearRegression(n_jobs=-1)
+clf.fit(X_train, y_train)
+confidence = clf.score(X_test, y_test)
 
+forecast_set = clf.predict(X_lately)
+df['Forecast'] = np.nan
+
+last_date = df.iloc[-1].name
+last_unix = last_date.timestamp()
+one_day = 86400
+next_unix = last_unix + one_day
+
+for i in forecast_set:
+    next_date = datetime.datetime.fromtimestamp(next_unix)
+    next_unix += 86400
+    df.loc[next_date] = [np.nan for _ in range(len(df.columns)-1)]+[i]
+
+df['Adj. Close'].plot()
+df['Forecast'].plot()
+plt.legend(loc=4)
+plt.xlabel('Date')
+plt.ylabel('Price')
+plt.show()
