@@ -10,11 +10,11 @@ from sklearn.model_selection import train_test_split
 
 def getStockData():
     quandl.ApiConfig.api_key = "qWcicxSctVxrP9PhyneG"
-    allData = quandl.get('WIKI/AAPL')
-    dataLength = 100 
-    print(dataLength)
+    allData = quandl.get('WIKI/TSLA')
+    dataLength = 200 
+    print(allData.tail())
     firstDataElem = len(allData) 
-    mlData = allData[0:firstDataElem+dataLength]
+    mlData = allData[0:firstDataElem]
     def FormatForModel(dataArray):
         dataArray = dataArray[['Adj. Open', 'Adj. High', 'Adj. Low', 'Adj. Close', 'Adj. Volume']]
         dataArray['HL_PCT'] = (dataArray['Adj. High'] - dataArray['Adj. Close']) / dataArray['Adj. Close'] * 100.0
