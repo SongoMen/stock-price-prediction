@@ -7,8 +7,24 @@ from sklearn.linear_model import LinearRegression
 import matplotlib.pyplot as plt
 from matplotlib import style
 import datetime
+from intriniorealtime.client import IntrinioRealtimeClient
+
+def on_quote(quote, backlog):
+    print("QUOTE: " , quote, "BACKLOG LENGTH: ", backlog)
+    
+options = {
+    'api_key': 'OjNhMzUwYTMyMWRjODY1ZjdkNWYzMTZmMTRhZWQ1NDEx',
+    'provider': 'quodd',
+    'on_quote': on_quote
+}
+
+client = IntrinioRealtimeClient(options)
+client.join(['AAPL','GE','MSFT'])
+client.connect()
+client.keep_alive()
 
 style.use('ggplot')
+
 
 df = quandl.get("WIKI/GOOGL")
 df = df[['Adj. Open',  'Adj. High',  'Adj. Low',  'Adj. Close', 'Adj. Volume']]
