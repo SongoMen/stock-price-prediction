@@ -7,21 +7,26 @@ from sklearn.linear_model import LinearRegression
 import matplotlib.pyplot as plt
 from matplotlib import style
 import datetime
-from intriniorealtime.client import IntrinioRealtimeClient
+import requests
+from yahoo_fin import stock_info as si
+from bs4 import BeautifulSoup
 
-def on_quote(quote, backlog):
-    print("QUOTE: " , quote, "BACKLOG LENGTH: ", backlog)
-    
-options = {
-    'api_key': 'OjNhMzUwYTMyMWRjODY1ZjdkNWYzMTZmMTRhZWQ1NDEx',
-    'provider': 'quodd',
-    'on_quote': on_quote
-}
+numberOfActiveStocks = 20
 
-client = IntrinioRealtimeClient(options)
-client.join(['AAPL','GE','MSFT'])
-client.connect()
-client.keep_alive()
+def getActiveStocks():
+    global stock_list
+    data = requests.get('https://finance.yahoo.com/screener/predefined/day_gainers')
+    if data.status_code != 200:
+        print('Error! Status code was {}.'.format(data.status_code))
+    html_data = BeautifulSoup(data.content , 'html.parser')
+    temp = list(html_data.children)[1]
+    temp = list(temp.children)[1]
+    temp = list(temp.children)[2]
+    html = str(list(temp.children)[0])
+    stock_list = html[html.find('"pageCategory":"YFINANCE:') + 25:html.find('","fallbackCategory":')].split(',')[0:numberOfActiveStocks]   #list indexed starts with meta data object, so add 1 to index because index[0] is removed
+    print(stock_list)
+
+getActiveStocks()
 
 style.use('ggplot')
 
